@@ -28,8 +28,7 @@ class ArcAgent:
     def determineBackgroundColor(self, grid):
         gridFlattened = grid.flatten()
         mostCommonColorBincount = np.bincount(gridFlattened)
-        mostCommonColorIndex = np.argmax(mostCommonColorBincount)
-        mostCommonColor = mostCommonColorBincount[mostCommonColorIndex]
+        mostCommonColor = np.argmax(mostCommonColorBincount)
         return mostCommonColor
 
     # determines whether a cell can be included or if it is off the grid
@@ -171,7 +170,41 @@ class ArcAgent:
             i += 1
         return result
 
-    def markOverlappingCells(self, grid1, grid2):
+    def markOverlappingCellsTraining(self, grid1, grid2, output):
+        gridShape1 = grid1.shape
+        gridShape2 = grid2.shape
+        grid1NumRows = gridShape1[0]
+        grid1NumCols = gridShape1[1]
+        grid2NumRows = gridShape2[0]
+        grid2NumCols = gridShape2[1]
+        """backgroundColor1 = self.determineBackgroundColor(grid1)
+        backgroundColor2 = self.determineBackgroundColor(grid2)"""
+        backgroundColor1 = 0
+        backgroundColor2 = 0 # not always true but not sure how to fix this and it's true in most csaes
+        result = np.zeros((grid1NumRows, grid1NumCols))
+        i = 0
+        j = 0
+        outputColor = 0
+        while i < grid1NumRows:
+            j = 0
+            while j < grid1NumCols:
+                grid1Curr = grid1[i, j]
+                grid2Curr = grid2[i, j]
+                if grid1Curr == backgroundColor1 or grid2Curr == backgroundColor2:
+                    result[i, j] = backgroundColor1
+                elif grid1Curr == grid2Curr:
+                    outputColor = output[i, j]
+                    result[i, j] = outputColor
+                elif grid1Curr != grid2Curr:
+                    result[i, j] = backgroundColor1
+                j += 1
+                # print("markoverlapping j ")
+            i += 1
+            # print("markoverlapping i ")
+        return (result, outputColor)
+
+    def markOverlappingCells(self, grid1, grid2, outputColor):
+        # print(outputColor)
         gridShape1 = grid1.shape
         gridShape2 = grid2.shape
         grid1NumRows = gridShape1[0]
@@ -180,6 +213,8 @@ class ArcAgent:
         grid2NumCols = gridShape2[1]
         backgroundColor1 = self.determineBackgroundColor(grid1)
         backgroundColor2 = self.determineBackgroundColor(grid2)
+        backgroundColor1 = 0
+        backgroundColor2 = 0 # not alwasy true but it's typically the case and is true for everything in b
         result = np.zeros((grid1NumRows, grid1NumCols))
         i = 0
         j = 0
@@ -191,15 +226,80 @@ class ArcAgent:
                 if grid1Curr == backgroundColor1 or grid2Curr == backgroundColor2:
                     result[i, j] = backgroundColor1
                 elif grid1Curr == grid2Curr:
-                    result[i, j] = grid1Curr
+                    result[i, j] = outputColor
                 elif grid1Curr != grid2Curr:
                     result[i, j] = backgroundColor1
                 j += 1
-                print("markoverlapping j ")
+                # print("markoverlapping j ")
             i += 1
-            print("markoverlapping i ")
+            # print("markoverlapping i ")
         return result
 
+    def markNonOverlappingCellsHorizontallyTraining(self, grid1, grid2, output):
+        gridShape1 = grid1.shape
+        gridShape2 = grid2.shape
+        grid1NumRows = gridShape1[0]
+        grid1NumCols = gridShape1[1]
+        grid2NumRows = gridShape2[0]
+        grid2NumCols = gridShape2[1]
+        """backgroundColor1 = self.determineBackgroundColor(grid1)
+        backgroundColor2 = self.determineBackgroundColor(grid2)"""
+        backgroundColor1 = 0
+        backgroundColor2 = 0 # not always true but not sure how to fix this and it's true in most csaes
+        result = np.zeros((grid1NumRows, grid1NumCols))
+        i = 0
+        j = 0
+        """print(grid1)
+        print(grid2)"""
+        outputColor = 0
+        while i < grid1NumRows - 1:
+            j = 0
+            while j < grid1NumCols:
+                grid1Curr = grid1[i, j]
+                grid2Curr = grid2[i, j]
+                if grid1Curr != backgroundColor1 or grid2Curr != backgroundColor2:
+                    result[i, j] = backgroundColor1
+                elif grid1Curr == backgroundColor1 and grid2Curr == backgroundColor2:
+                    outputColor = output[i, j]
+                    result[i, j] = outputColor
+                j += 1
+                # print("markoverlapping j ")
+            i += 1
+            # print("markoverlapping i ")
+        return (result, outputColor)
+
+    def markNonOverlappingCellsHorizontally(self, grid1, grid2, outputColor):
+        gridShape1 = grid1.shape
+        gridShape2 = grid2.shape
+        # print(gridShape2)
+        grid1NumRows = gridShape1[0]
+        grid1NumCols = gridShape1[1]
+        grid2NumRows = gridShape2[0]
+        grid2NumCols = gridShape2[1]
+        """backgroundColor1 = self.determineBackgroundColor(grid1)
+        backgroundColor2 = self.determineBackgroundColor(grid2)"""
+        backgroundColor1 = 0
+        backgroundColor2 = 0 # not always true but not sure how to fix this and it's true in most csaes
+        result = np.zeros((grid1NumRows, grid1NumCols))
+        i = 0
+        j = 0
+        """print("non overlapping")
+        print(grid1)
+        print(grid2)"""
+        while i < grid1NumRows:
+            j = 0
+            while j < grid1NumCols:
+                grid1Curr = grid1[i, j]
+                grid2Curr = grid2[i, j]
+                if grid1Curr != backgroundColor1 or grid2Curr != backgroundColor2:
+                    result[i, j] = backgroundColor1
+                elif grid1Curr == backgroundColor1 and grid2Curr == backgroundColor2:
+                    result[i, j] = outputColor
+                j += 1
+                # print("markoverlapping j ")
+            i += 1
+            # print("markoverlapping i ")
+        return result
 
     def findShapes(self, grid):
         gridShape = grid.shape
@@ -299,7 +399,7 @@ class ArcAgent:
                     direction = "right"
                     break
                 outputGrid[row, col] = mainColorOutput
-            print(top, right, bottom, left)
+            # print(top, right, bottom, left)
         return outputGrid
 
 
@@ -356,6 +456,7 @@ class ArcAgent:
         rotate90DegCounterclockwise = "Rotate90DegCounterclockwise"
         rotate180DegCounterclockwise = "Rotate180DegCounterclockwise"
         dividedVerticallyOverlappingShapes = "DividedVerticallyOverlappingShapes"
+        dividedHorizontallyNonOverlappingShapes = "DividedHorizontallyNonOverlappingShapes"
         while i < numTrainingDataSets:
             trainingInputData = arc_problem.training_set()[i].get_input_data().data()
             shapesListInput = self.findShapes(trainingInputData)
@@ -381,7 +482,7 @@ class ArcAgent:
             trainingOutputNumCols = trainingOutputData.shape[1]
             if trainingInputNumRows == trainingOutputNumRows and trainingInputNumCols == trainingOutputNumCols:
                 if np.array_equal(rot90Input, trainingOutputData):
-                    print(arc_problem._id)
+                    # print(arc_problem._id)
                     bestFitDictVal = bestFitDict.get(rotate90DegCounterclockwise, 0)
                     bestFitDict[rotate90DegCounterclockwise] = bestFitDictVal + 1
                 rot180Input = np.rot90(rot90Input)
@@ -389,27 +490,33 @@ class ArcAgent:
                 if np.array_equal(rot180Input, trainingOutputData):
                     bestFitDictVal = bestFitDict.get(rotate180DegCounterclockwise, 0)
                     bestFitDict[rotate180DegCounterclockwise] = bestFitDictVal + 1
-            if trainingInputNumCols % 2 == 0:
+            # print("num cols" + str(trainingInputNumCols) + arc_problem._id)
+            if trainingInputNumRows % 2 == 1:
+                # print("% 2 " + arc_problem._id)
                 inputMiddleCols = trainingInputNumCols // 2
-                inputMiddleMinusOneCols = inputMiddleCols - 1
+                # inputMiddleMinusOneCols = inputMiddleCols - 1
                 inputMiddleRows = trainingInputNumRows // 2
-                inputMiddleMinusOneRows = inputMiddleRows - 1
+                # inputMiddleMinusOneRows = inputMiddleRows - 1
                 inputFirstHalf = trainingInputData[:, 0:inputMiddleCols]
-                inputLastHalf = trainingInputData[:, inputMiddleCols:]
-                inputMiddleCol = trainingInputData[:, inputMiddleMinusOneCols]
+                inputLastHalf = trainingInputData[:, inputMiddleCols + 1:]
+                inputMiddleCol = trainingInputData[:, inputMiddleCols:]
                 dividedVerticallyRow = 0
                 dividedVerticallyCol = 0
                 # i should move these to one helper fucntion later
                 dividedVertically = True
                 while dividedVerticallyRow < trainingInputNumRows:
-                    print("vertical loop")
-                    cellColorDividedVertically = trainingInputData[dividedVerticallyRow, dividedVerticallyCol]
-                    print("vertical loop cols")
-                    if dividedVerticallyRow == 0 and dividedVerticallyCol == 0:
+                    cellColorDividedVertically = trainingInputData[dividedVerticallyRow, inputMiddleCols]
+                    if cellColorDividedVertically == backgroundColorInput:
+                        dividedVerticallyRow += 1
+                        # print("background color " + arc_problem._id)
+                        dividedVertically = False
+                        break
+                    if dividedVerticallyRow == 0:
                         cellColorDividedVerticallyPrev = cellColorDividedVertically
-                        dividedVerticallyCol += 1
+                        dividedVerticallyRow += 1
                         continue
                     if cellColorDividedVertically != cellColorDividedVerticallyPrev:
+                        # print("not the same color " + arc_problem._id)
                         dividedVertically = False
                         break
                     cellColorDividedVerticallyPrev = cellColorDividedVertically
@@ -417,21 +524,55 @@ class ArcAgent:
                 if dividedVertically == True:
                     bestFitDictVal = bestFitDict.get(dividedVerticallyOverlappingShapes, 0)
                     bestFitDict[dividedVerticallyOverlappingShapes] = bestFitDictVal + 1
+                    # print("divided vertically true" + arc_problem._id)
 
-                """dividedHorizontallyRow = 0
+                # make this into a helper func and make it generalizable so i can do it for either vertically or horizontally tho this one's a bit different since
+                # it's looking for non overlapping cells or whatever the math term is cells that are not filled in in both and the ones that are not filled in
+                # turn green 6430c8c4.json
+                # print("% 2 horizontal" + arc_problem._id)
+                inputMiddleCols = trainingInputNumCols // 2
+                # inputMiddleMinusOneCols = inputMiddleCols - 1
+                inputMiddleRows = trainingInputNumRows // 2
+                # inputMiddleMinusOneRows = inputMiddleRows - 1
+                inputFirstHalf = trainingInputData[0:inputMiddleRows, :]
+                inputLastHalf = trainingInputData[inputMiddleRows + 1:, :]
+                # inputMiddleRow = trainingInputData[]
+                dividedHorizontallyRow = 0
                 dividedHorizontallyCol = 0
-                isDividedHorizontally = True
-                while dividedHorizontallyRow < trainingInputNumRows:
-                    while dividedHorizontallyCol < inputMiddleCols:
-                        cellColorDividedHorizontally = trainingInputData[dividedHorizontallyCol, dividedHorizontallyCol]
-                        if dividedHorizontallyRow == 0 and dividedHorizontallyCol == 0:
-                            cellColorDividedHorizontallyPrev = cellColorDividedHorizontally
-                            dividedHorizontallyCol += 1
-                            continue
-                        if dividedHorizontally
+                # i should move these to one helper fucntion later
+                dividedHorizontally = True
+                backgroundColorInput = 0
+                """if arc_problem._id == "6430c8c4":
+                    print("1st loop before")
+                    print(inputFirstHalf)
+                    print("last half")
+                    print(inputLastHalf)"""
+                while dividedHorizontallyCol < trainingInputNumCols:
+                    """if arc_problem._id == "6430c8c4":
+                        print("1st loop")
+                        print(inputFirstHalf)
+                        print("last half")
+                        print(inputLastHalf)"""
+                    cellColorDividedHorizontally = trainingInputData[inputMiddleRows, dividedHorizontallyCol]
+                    if cellColorDividedHorizontally == backgroundColorInput:
+                        dividedHorizontallyRow += 1
+                        # print("background color " + arc_problem._id)
+                        dividedHorizontally = False
+                        break
+                    if dividedHorizontallyRow == 0:
                         cellColorDividedHorizontallyPrev = cellColorDividedHorizontally
-                        dividedHorizontallyCol += 1
-                    dividedHorizontallyCol += 1"""
+                        dividedHorizontallyRow += 1
+                        continue
+                    if cellColorDividedHorizontally != cellColorDividedHorizontallyPrev:
+                        # print("not the same color horizontal " + arc_problem._id)
+                        dividedHorizontally = False
+                        break
+                    cellColorDividedHorizontallyPrev = cellColorDividedHorizontally
+                    dividedHorizontallyCol += 1
+                if dividedHorizontally == True:
+                    bestFitDictVal = bestFitDict.get(dividedHorizontallyNonOverlappingShapes, 0)
+                    bestFitDict[dividedHorizontallyNonOverlappingShapes] = bestFitDictVal + 1
+                    # print("divided horizontally true" + arc_problem._id)
             # f76d97a5
             # if
             i += 1
@@ -455,6 +596,11 @@ class ArcAgent:
                 currRes = np.array([]) #placeholder obviously
                 trainingInputDataCheck = arc_problem.training_set()[k].get_input_data().data()
                 trainingOutputDataCheck = arc_problem.training_set()[k].get_output_data().data()
+                trainingInputDataShape = trainingInputDataCheck.shape
+                trainingInputNumRows = trainingInputDataShape[0]
+                trainingInputNumCols = trainingInputDataShape[1]
+                trainingInputMiddleCols = trainingInputNumCols // 2
+                trainingInputMiddleRows = trainingInputNumRows // 2
                 if bestFitCurrKey == "BlankGridToSpiral":
                     outputColor = (arc_problem.training_set()[k].get_output_data().data())[0][0]
                     currRes = self.allBackgroundColorToSpiral(trainingInputDataCheck, backgroundColorInput, outputColor)
@@ -470,9 +616,32 @@ class ArcAgent:
                 if bestFitCurrKey == rotate180DegCounterclockwise:
                     currRes = self.rotate180DegCounterclockwise(trainingInputDataCheck)
                 if bestFitCurrKey == dividedVerticallyOverlappingShapes:
-                    inputFirstHalf = trainingInputData[:, 0:inputMiddleCols]
-                    inputLastHalf = trainingInputData[:, inputMiddleCols:]
-                    currRes = self.markOverlappingCells(inputFirstHalf, inputLastHalf)
+                    inputFirstHalf = trainingInputDataCheck[:, 0:trainingInputMiddleCols]
+                    inputLastHalf = trainingInputDataCheck[:, trainingInputMiddleCols + 1:]
+                    currResTuple = self.markOverlappingCellsTraining(inputFirstHalf, inputLastHalf, trainingOutputDataCheck)
+                    currRes = currResTuple[0]
+                    dividedVerticallyOverlappingShapesOutputColor = currResTuple[1]
+                    """if arc_problem._id == "0520fde7":
+                        print(currRes)
+                        print(trainingOutputDataCheck)"""
+                if bestFitCurrKey == dividedHorizontallyNonOverlappingShapes:
+                    inputFirstHalf = trainingInputDataCheck[0:trainingInputMiddleRows, :]
+                    inputLastHalf = trainingInputDataCheck[trainingInputMiddleRows + 1:, :]
+                    inputFirstHalfShape = inputFirstHalf.shape
+                    inputFirstHalfNumRows = inputFirstHalfShape[0]
+                    inputLastHalfShape = inputLastHalf.shape
+                    inputLastHalfNumRows = inputLastHalfShape[0]
+                    """if arc_problem._id == "6430c8c4":
+                        print(inputFirstHalf)
+                        print("last half")
+                        print(inputLastHalf)"""
+                    if inputFirstHalfNumRows == inputLastHalfNumRows:
+                        currResTuple = self.markNonOverlappingCellsHorizontallyTraining(inputFirstHalf, inputLastHalf, trainingOutputDataCheck)
+                        currRes = currResTuple[0]
+                        dividedHorizontallyNonOverlappingShapesOutputColor = currResTuple[1]
+                        """if arc_problem._id == "0520fde7":
+                            print(currRes)
+                            print(trainingOutputDataCheck)"""
                 if np.array_equal(currRes, trainingOutputDataCheck):
                     currDictVal = correctTrainingOutputDict.get(bestFitCurrKey, 0)
                     correctTrainingOutputDict[bestFitCurrKey] = currDictVal + 1
@@ -497,6 +666,7 @@ class ArcAgent:
             testNumRows = testShape[0]
             testNumCols = testShape[1]
             testMiddleCols = testNumCols // 2
+            testMiddleRows = testNumRows // 2
             if correctCurrKeyFinal == "BlankGridToSpiral":
                 currFinal = self.allBackgroundColorToSpiral(testData, backgroundColorInput, blankGridToSpiralOutputColor)
                 predictions.append(currFinal)
@@ -508,8 +678,18 @@ class ArcAgent:
                 predictions.append(currFinal)
             if correctCurrKeyFinal == dividedVerticallyOverlappingShapes:
                 testFirstHalf = testData[:, 0:testMiddleCols]
-                testLastHalf = trainingInputData[:, testMiddleCols:]
-                currFinal = self.markOverlappingCells(testFirstHalf, testLastHalf)
+                testLastHalf = testData[:, testMiddleCols + 1:]
+                # print("color " + str(dividedVerticallyOverlappingShapesOutputColor))
+                currFinal = self.markOverlappingCells(testFirstHalf, testLastHalf, dividedVerticallyOverlappingShapesOutputColor)
+                predictions.append(currFinal)
+            if correctCurrKeyFinal == dividedHorizontallyNonOverlappingShapes:
+                testFirstHalf = testData[0:testMiddleRows, :]
+                testLastHalf = testData[testMiddleRows + 1:, :]
+                # print("color " + str(dividedHorizontallyNonOverlappingShapesOutputColor))
+                """print("correct horizontally")
+                print(testFirstHalf)
+                print(testLastHalf)"""
+                currFinal = self.markNonOverlappingCellsHorizontally(testFirstHalf, testLastHalf, dividedHorizontallyNonOverlappingShapesOutputColor)
                 predictions.append(currFinal)
             b += 1
         return predictions
